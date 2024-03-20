@@ -5,8 +5,8 @@
 <div class="jumbotron">
     <h2 class="display-4">@this.DisplayValue</h2>
 
-    <button type="button" class="btn btn-success" @onclick="() => { this.StartAsync(); }">Start</button>
-    <button type="button" class="btn btn-danger" @onclick="() => { this.StopAsync(); }">Stop</button>
+    <button type="button" class="btn btn-success" disabled="@IsTimerActive" @onclick="() => { this.StartAsync(); }">Start</button>
+    <button type="button" class="btn btn-danger" disabled="@(!IsTimerActive)" @onclick="() => { this.StopAsync(); }">Stop</button>
     <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetAsync(); }">Reset</button>
 
     <hr />
@@ -37,4 +37,5 @@
         }
     </div>
     <div>Total Time: @GetTotalDisplayValue()</div>
+    <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetSegmentsAsync(); }">Reset Segments</button>
 </div>

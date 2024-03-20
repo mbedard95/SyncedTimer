@@ -1,5 +1,4 @@
-using SyncedTimer.Data;
-using Azure.Identity;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
 
 var app = builder.Build();
 

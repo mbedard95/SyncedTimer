@@ -6,14 +6,15 @@ namespace SyncedTimer.Pages
     {
         private static event EventHandler<TimerEventArgs> OnTimerChanged;
         private static event EventHandler<SegmentEventArgs> OnSegmentsChanged;
-
+        
+        private static bool IsTimerActive { get; set; }
         private static int SharedTotalSeconds { get; set; }
         private static int SegmentSeconds { get; set; }
 
         private static System.Threading.Timer InternalTimer = new System.Threading.Timer((state) => 
         {
             SharedTotalSeconds++;
-            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
+            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds, IsTimerActive));
         });
 
         private static System.Threading.Timer InternalSegmentTimer = new System.Threading.Timer((state) => 
@@ -27,9 +28,8 @@ namespace SyncedTimer.Pages
         public string DisplayValue { get; set; } = "";
 
         public Task StartAsync()
-        {            
-            InternalTimer.Change(1000, 1000);
-            InternalSegmentTimer.Change(1000, 1000);
+        {
+            StartTimer();
 
             SegmentSeconds = 0;
 
@@ -38,8 +38,7 @@ namespace SyncedTimer.Pages
 
         public Task StopAsync()
         {
-            InternalTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            InternalSegmentTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            StopTimer();
 
             Segments.Add(new Segment { Index = Segments.Count, Seconds = SegmentSeconds });
 
@@ -50,14 +49,27 @@ namespace SyncedTimer.Pages
 
         public Task ResetAsync()
         {
-            InternalTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            InternalSegmentTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            StopTimer();
 
             SharedTotalSeconds = 0;
 
-            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
-            
+            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds, IsTimerActive));
+
             return Task.CompletedTask;
+        }
+
+        private static void StartTimer()
+        {
+            IsTimerActive = true;
+            InternalTimer.Change(1000, 1000);
+            InternalSegmentTimer.Change(1000, 1000);
+        }
+
+        private static void StopTimer()
+        {
+            IsTimerActive = false;
+            InternalTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            InternalSegmentTimer.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
         public Task RemoveSegmentAsync(int index)
@@ -75,24 +87,19 @@ namespace SyncedTimer.Pages
             return Task.CompletedTask;
         }
 
+        public Task ResetSegmentsAsync()
+        {
+            Segments.Clear();
+
+            OnSegmentsChanged?.Invoke(null, new SegmentEventArgs(Segments));
+
+            return Task.CompletedTask;
+        }
+
         protected override Task OnInitializedAsync()
         {
-            OnTimerChanged += (o, e) =>
-            {
-                this.InvokeAsync(() =>
-                {
-                    this.SetDisplayValue();
-                    this.StateHasChanged();
-                });
-            };
-
-            OnSegmentsChanged += (o, e) =>
-            {
-                this.InvokeAsync(() =>
-                {
-                    this.StateHasChanged();
-                });
-            };
+            OnTimerChanged += Timer_OnTimerChanged;
+            OnSegmentsChanged += Timer_OnSegmentsChanged;
 
             // Calculate the initial value for the timer.
             this.SetDisplayValue();
@@ -102,7 +109,19 @@ namespace SyncedTimer.Pages
 
         private void Timer_OnSegmentsChanged(object? sender, SegmentEventArgs e)
         {
-            throw new NotImplementedException();
+            this.InvokeAsync(() =>
+            {
+                this.StateHasChanged();
+            });
+        }
+
+        private void Timer_OnTimerChanged(object? sender, TimerEventArgs e)
+        {
+            this.InvokeAsync(() =>
+            {
+                this.SetDisplayValue();
+                this.StateHasChanged();
+            });
         }
 
         private void SetDisplayValue()
@@ -127,9 +146,11 @@ namespace SyncedTimer.Pages
     public class TimerEventArgs : EventArgs
     {
         public int Seconds { get; set; }
-        public TimerEventArgs(int seconds)
+        public bool IsActive { get; set; }
+        public TimerEventArgs(int seconds, bool isActive)
         {
             this.Seconds = seconds;
+            this.IsActive = isActive;
         }        
     }
 
