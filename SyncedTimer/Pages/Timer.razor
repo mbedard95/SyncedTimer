@@ -10,7 +10,7 @@
     <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetAsync(); }">Reset</button>
 
     <hr />
-
+    <h3>Total Time: @GetTotalDisplayValue()</h3>
     <div id="scrollbox">
         @if (Segments.Count > 0)
         {
@@ -28,14 +28,14 @@
                     {
                         <tr>
                             <td>@(item.Index + 1)</td>
-                        <td>@CalculateDisplayValue(item.Seconds)</td>
-                        <td><button type="button" class="btn btn-danger" @onclick="() => { this.RemoveSegmentAsync(item.Index); }"><span class="oi oi-trash" aria-hidden="true"></span></button></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                            <td>@CalculateDisplayValue(item.Seconds)</td>
+                            <td><button type="button" class="btn btn-danger" @onclick="() => { this.RemoveSegmentAsync(item.Index); }"><span class="oi oi-trash" aria-hidden="true"></span></button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <br/>
+            <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetSegmentsAsync(); }">Clear Segments</button>
         }
     </div>
-    <div>Total Time: @GetTotalDisplayValue()</div>
-    <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetSegmentsAsync(); }">Reset Segments</button>
 </div>
