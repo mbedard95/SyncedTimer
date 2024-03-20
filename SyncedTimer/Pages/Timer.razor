@@ -12,10 +12,28 @@
     <hr />
 
     <div id="scrollbox">
-        @foreach (var item in Segments)
+        @if (Segments.Count > 0)
         {
-            <div>Segment @(item.Index + 1): @CalculateDisplayValue(item.Seconds)</div>
-            <button type="button" class="btn btn-danger" @onclick="() => { this.RemoveSegmentAsync(item.Index); }"><span class="oi oi-trash" aria-hidden="true"></span></button>
+            <table class="arrowes-table table-striped">
+                <thead>
+                    <tr>
+                        <th>Segment</th>
+                        <th>Length</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Segments)
+                    {
+                        <tr>
+                            <td>@(item.Index + 1)</td>
+                        <td>@CalculateDisplayValue(item.Seconds)</td>
+                        <td><button type="button" class="btn btn-danger" @onclick="() => { this.RemoveSegmentAsync(item.Index); }"><span class="oi oi-trash" aria-hidden="true"></span></button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
         }
     </div>
     <div>Total Time: @GetTotalDisplayValue()</div>
