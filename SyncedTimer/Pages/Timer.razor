@@ -1,13 +1,22 @@
-﻿@page "/timer"
+﻿@page "/"
 
 <h1>Timer</h1>
 
 <div class="jumbotron">
     <h2 class="display-4">@this.DisplayValue</h2>
 
-    <hr />
-
     <button type="button" class="btn btn-success" @onclick="() => { this.StartAsync(); }">Start</button>
     <button type="button" class="btn btn-danger" @onclick="() => { this.StopAsync(); }">Stop</button>
     <button type="button" class="btn btn-outline-danger" @onclick="() => { this.ResetAsync(); }">Reset</button>
+
+    <hr />
+
+    <div id="scrollbox">
+        @foreach (var item in Segments)
+        {
+            <div>Segment @(item.Index + 1): @CalculateDisplayValue(item.Seconds)</div>
+            <button type="button" class="btn btn-danger" @onclick="() => { this.RemoveSegmentAsync(item.Index); }"><span class="oi oi-trash" aria-hidden="true"></span></button>
+        }
+    </div>
+    <div>Total Time: @GetTotalDisplayValue()</div>
 </div>

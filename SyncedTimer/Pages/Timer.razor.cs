@@ -4,56 +4,76 @@ namespace SyncedTimer.Pages
 {
     partial class Timer
     {
-
-        /// <summary>
-        /// The shared event source that is used to signal all connected clients when the data is changed.
-        /// </summary>
         private static event EventHandler<TimerEventArgs> OnTimerChanged;
+        private static event EventHandler<SegmentEventArgs> OnSegmentsChanged;
 
-        /// <summary>
-        /// The shared data store that holds the data to share across clients.
-        /// </summary>
         private static int SharedTotalSeconds { get; set; }
+        private static int SegmentSeconds { get; set; }
 
-        /// <summary>
-        /// The internal timer that takes care of updating the timer value.
-        /// </summary>
-        private static System.Threading.Timer InternalTimer = new System.Threading.Timer((state) => {
-            // Increment the shared count, and signal the change to all other instances
-            // of this class using the static OnTimerChanged event.
+        private static System.Threading.Timer InternalTimer = new System.Threading.Timer((state) => 
+        {
             SharedTotalSeconds++;
-            if (null != OnTimerChanged)
-            {
-                OnTimerChanged.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
-            }
+            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
         });
 
+        private static System.Threading.Timer InternalSegmentTimer = new System.Threading.Timer((state) => 
+        {
+            SegmentSeconds++;
+        });
 
+        public static List<Segment> Segments { get; set; } = new List<Segment>();
 
         [Parameter]
-        public string DisplayValue { get; set; }
-
+        public string DisplayValue { get; set; } = "";
 
         public Task StartAsync()
-        {
+        {            
             InternalTimer.Change(1000, 1000);
+            InternalSegmentTimer.Change(1000, 1000);
+
+            SegmentSeconds = 0;
+
             return Task.CompletedTask;
         }
 
         public Task StopAsync()
         {
             InternalTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            InternalSegmentTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
+            Segments.Add(new Segment { Index = Segments.Count, Seconds = SegmentSeconds });
+
+            OnSegmentsChanged?.Invoke(null, new SegmentEventArgs(Segments));
+            
             return Task.CompletedTask;
         }
 
         public Task ResetAsync()
         {
             InternalTimer.Change(Timeout.Infinite, Timeout.Infinite);
+            InternalSegmentTimer.Change(Timeout.Infinite, Timeout.Infinite);
+
             SharedTotalSeconds = 0;
-            OnTimerChanged.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
+
+            OnTimerChanged?.Invoke(null, new TimerEventArgs(SharedTotalSeconds));
+            
             return Task.CompletedTask;
         }
 
+        public Task RemoveSegmentAsync(int index)
+        {
+            Segments.RemoveAt(index);
+
+            //rearrange indeces
+            for (int i = 0; i < Segments.Count; i++)
+            {
+                Segments[i].Index = i;
+            }
+
+            OnSegmentsChanged?.Invoke(null, new SegmentEventArgs(Segments));
+
+            return Task.CompletedTask;
+        }
 
         protected override Task OnInitializedAsync()
         {
@@ -61,38 +81,70 @@ namespace SyncedTimer.Pages
             {
                 this.InvokeAsync(() =>
                 {
-                    // Since we're not necessarily on the thread that has proper access to the renderer context
-                    // we need to use the InvokeAsync() method, which takes care of running our code on the right thread.
-                    this.CalculateDisplayValue();
+                    this.SetDisplayValue();
+                    this.StateHasChanged();
+                });
+            };
+
+            OnSegmentsChanged += (o, e) =>
+            {
+                this.InvokeAsync(() =>
+                {
                     this.StateHasChanged();
                 });
             };
 
             // Calculate the initial value for the timer.
-            this.CalculateDisplayValue();
-
+            this.SetDisplayValue();
 
             return base.OnInitializedAsync();
         }
 
-
-        private void CalculateDisplayValue()
+        private void Timer_OnSegmentsChanged(object? sender, SegmentEventArgs e)
         {
-            int mins = SharedTotalSeconds / 60;
-            int secs = SharedTotalSeconds % 60;
+            throw new NotImplementedException();
+        }
 
-            this.DisplayValue = string.Format("{0:00}:{1:00}", mins, secs);
+        private void SetDisplayValue()
+        {
+            this.DisplayValue = CalculateDisplayValue(SharedTotalSeconds);
+        }
+
+        private string GetTotalDisplayValue()
+        {
+            return CalculateDisplayValue(Segments.Select(x => x.Seconds).Sum());
+        }
+
+        public static string CalculateDisplayValue(int totalSeconds)
+        {
+            int mins = totalSeconds / 60;
+            int secs = totalSeconds % 60;
+
+            return string.Format("{0:00}:{1:00}", mins, secs);
         }
     }
 
     public class TimerEventArgs : EventArgs
     {
+        public int Seconds { get; set; }
         public TimerEventArgs(int seconds)
         {
             this.Seconds = seconds;
+        }        
+    }
+
+    public class SegmentEventArgs : EventArgs
+    {
+        public List<Segment> Segments { get; set; }
+        public SegmentEventArgs(List<Segment> segments)
+        {
+            this.Segments = segments;
         }
+    }
 
+    public class Segment
+    {
+        public int Index { get; set; }
         public int Seconds { get; set; }
-
     }
 }
