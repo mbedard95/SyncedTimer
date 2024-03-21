@@ -1,5 +1,7 @@
 
 
+using SyncedTimer.Hubs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 //var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri"));
@@ -25,7 +27,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+
+
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
+app.MapHub<ChatHub>(ChatHub.HubUrl);
 
 app.Run();

@@ -3,7 +3,7 @@
 <h1>Timer</h1>
 
 <div class="jumbotron">
-    <h2 class="display-4">@this.DisplayValue</h2>
+    <h2 class="display-4">@CalculateDisplayValue(SharedTotalSeconds)</h2>
 
     <button type="button" class="btn btn-success" disabled="@IsTimerActive" @onclick="() => { this.StartAsync(); }">Start</button>
     <button type="button" class="btn btn-danger" disabled="@(!IsTimerActive)" @onclick="() => { this.StopAsync(); }">Stop</button>
